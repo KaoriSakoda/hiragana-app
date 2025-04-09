@@ -215,6 +215,12 @@
             margin-top: 10px;
             font-weight: bold;
         }
+        /* 設定ノート */
+        .settings-note {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
     </style>
 </head>
 <body>
@@ -352,8 +358,8 @@
         
         // AudioCache - 音声キャッシュ
         const audioCache = new Map();
-        
-        // 音声合成機能を修正した関数
+
+        // 日本語ネイティブ発音を重視した音声生成関数
         async function generateSpeech(text, voice = voiceSelect.value, speed = parseFloat(speedSelect.value)) {
             // ブラウザ音声合成を使用する場合
             if (!useOpenAI.checked) {
@@ -383,7 +389,7 @@
             // 3. 子供向け日本語発音に特化した指示文
             const instructions = `
         あなたは日本の幼稚園で10年以上働いている先生で、ネイティブの日本語話者です。3歳の子どもに向けてひらがなを教えています。
-        
+
         絶対に守るべきこと:
         1. 完全に自然な日本語のネイティブ発音で話してください。外国語訛りは絶対に避けてください。
         2. 日本の子ども番組の声優のような、温かみのある明るい声で話してください。
@@ -476,7 +482,7 @@
             }
         }
         
-        // テスト用のボタンのイベントリスナーも更新
+        // テスト用のボタンのイベントリスナーを更新
         if (testVoiceButton) {
             testVoiceButton.addEventListener('click', function() {
                 const testText = 'ひらがなクイズへようこそ！楽しく学びましょう！';
@@ -879,6 +885,3 @@
                 generateQuestion();
             }, 3000); // ウェルカムメッセージ再生後に問題を生成
         }, 1000);
-    </script>
-</body>
-</html>
