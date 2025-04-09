@@ -300,6 +300,26 @@
     </div>
 
     <script>
+        // DOM要素のnull安全なセレクタ関数
+        function safeGetElement(id) {
+          const element = document.getElementById(id);
+          if (!element) {
+            console.warn(`要素 ${id} が見つかりませんでした`);
+          }
+          return element;
+        }
+        
+        // 以下のようにDOM要素を取得する箇所を修正
+        const settingsToggle = safeGetElement('settings-toggle');
+        const settingsContent = safeGetElement('settings-content');
+        // ... 他の要素も同様に ...
+        
+        // イベントリスナーを追加する前にnullチェック
+        if (settingsToggle) {
+          settingsToggle.addEventListener('click', function() {
+            settingsContent.classList.toggle('show');
+          });
+            
         // 設定パネルの要素
         const settingsToggle = document.getElementById('settings-toggle');
         const settingsContent = document.getElementById('settings-content');
@@ -318,7 +338,8 @@
         });
         
         // APIキーの保存
-        saveApiKeyButton.addEventListener('click', function() {
+        if (saveApiKeyButton) {
+          saveApiKeyButton.addEventListener('click', function() {
             const apiKey = apiKeyInput.value.trim();
             if (apiKey) {
                 localStorage.setItem('openai_api_key', apiKey);
