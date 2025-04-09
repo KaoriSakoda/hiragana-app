@@ -309,69 +309,40 @@
           return element;
         }
         
-        // 以下のようにDOM要素を取得する箇所を修正
+        // 設定パネルの要素
         const settingsToggle = safeGetElement('settings-toggle');
         const settingsContent = safeGetElement('settings-content');
-        // ... 他の要素も同様に ...
+        const voiceSelect = safeGetElement('voice-select');
+        const speedSelect = safeGetElement('speed-select');
+        const useOpenAI = safeGetElement('use-openai');
+        const testVoiceButton = safeGetElement('test-voice');
+        const loadingIndicator = safeGetElement('loading-indicator');
+        const streakCounter = safeGetElement('streak-counter');
         
-        // イベントリスナーを追加する前にnullチェック
+        // 要素を取得
+        const card1 = safeGetElement('card1');
+        const card2 = safeGetElement('card2');
+        const nextButton = safeGetElement('next-button');
+        const hiraganaButtonsContainer = safeGetElement('hiragana-buttons');
+        const prevSetButton = safeGetElement('prev-set');
+        const nextSetButton = safeGetElement('next-set');
+        const rewardContainer = safeGetElement('reward-container');
+        const rewardImage = safeGetElement('reward-image');
+        const rewardCaption = safeGetElement('reward-caption');
+        const questionText = safeGetElement('question-text');
+        
+        // 各カードのひらがなと正解マークの要素を取得
+        const hiragana1 = card1.querySelector('.hiragana');
+        const hiragana2 = card2.querySelector('.hiragana');
+        const correctMark1 = card1.querySelector('.correct-mark');
+        const correctMark2 = card2.querySelector('.correct-mark');
+        
+        // 設定パネルのトグル
         if (settingsToggle) {
           settingsToggle.addEventListener('click', function() {
             settingsContent.classList.toggle('show');
           });
-            
-        // 設定パネルの要素
-        const settingsToggle = document.getElementById('settings-toggle');
-        const settingsContent = document.getElementById('settings-content');
-        const voiceSelect = document.getElementById('voice-select');
-        const speedSelect = document.getElementById('speed-select');
-        const useOpenAI = document.getElementById('use-openai');
-        const apiKeyInput = document.getElementById('api-key');
-        const saveApiKeyButton = document.getElementById('save-api-key');
-        const testVoiceButton = document.getElementById('test-voice');
-        const loadingIndicator = document.getElementById('loading-indicator');
-        const streakCounter = document.getElementById('streak-counter');
-        
-        // 設定パネルのトグル
-        settingsToggle.addEventListener('click', function() {
-            settingsContent.classList.toggle('show');
-        });
-        
-        // APIキーの保存
-        if (saveApiKeyButton) {
-          saveApiKeyButton.addEventListener('click', function() {
-            const apiKey = apiKeyInput.value.trim();
-            if (apiKey) {
-                localStorage.setItem('openai_api_key', apiKey);
-                savedApiKey = apiKey; // 変数も更新
-                alert('APIキーを保存しました');
-            } else {
-                alert('APIキーを入力してください');
-            }
-        });
-        
-        // 保存されたAPIキーを読み込む
-        let savedApiKey = localStorage.getItem('openai_api_key');
-        if (savedApiKey) {
-            apiKeyInput.value = savedApiKey;
         }
-        
-        // 音声テスト
-        testVoiceButton.addEventListener('click', function() {
-            const testText = 'ひらがなクイズへようこそ！楽しく学びましょう！';
-            const voice = voiceSelect.value;
-            const speed = parseFloat(speedSelect.value);
-            
-            if (useOpenAI.checked) {
-                // プロンプトなしで直接テキストを送信
-                generateSpeech(testText, voice, 'tts-1', speed);
-            } else {
-                const utterance = new SpeechSynthesisUtterance(testText);
-                utterance.lang = 'ja-JP';
-                utterance.rate = speed;
-                synth.speak(utterance);
-            }
-        });
         
         // 音声合成の設定
         const synth = window.speechSynthesis;
@@ -381,13 +352,9 @@
         
         // AudioCache - 音声キャッシュ
         const audioCache = new Map();
-
+        
         // 音声合成機能を修正した関数
         async function generateSpeech(text, voice = voiceSelect.value, speed = parseFloat(speedSelect.value)) {
-            // APIキー入力欄を非表示にする（Netlify Functionsを使うため不要になる）
-            document.querySelector('div:has(#api-key)').style.display = 'none';
-            document.querySelector('div:has(#save-api-key)').style.display = 'none';
-            
             // ブラウザ音声合成を使用する場合
             if (!useOpenAI.checked) {
                 const utterance = new SpeechSynthesisUtterance(text);
@@ -416,7 +383,7 @@
             // 3. 子供向け日本語発音に特化した指示文
             const instructions = `
         あなたは日本の幼稚園で10年以上働いている先生で、ネイティブの日本語話者です。3歳の子どもに向けてひらがなを教えています。
-
+        
         絶対に守るべきこと:
         1. 完全に自然な日本語のネイティブ発音で話してください。外国語訛りは絶対に避けてください。
         2. 日本の子ども番組の声優のような、温かみのある明るい声で話してください。
@@ -460,13 +427,13 @@
                         instructions: instructions
                     })
                 });
-
+        
                 if (!response.ok) {
                     const errorData = await response.json();
                     console.error('API Error:', response.status, errorData);
                     throw new Error(`APIリクエストが失敗: ${response.status}`);
                 }
-
+        
                 const responseData = await response.json();
                 
                 // Base64エンコードされた音声データをデコード
@@ -508,49 +475,33 @@
                 alert('音声の生成に失敗しました。詳細はコンソールをご確認ください。');
             }
         }
-
-        // テスト用のボタンのイベントリスナーも更新
-        testVoiceButton.addEventListener('click', function() {
-            const testText = 'ひらがなクイズへようこそ！楽しく学びましょう！';
-            const voice = voiceSelect.value;
-            const speed = parseFloat(speedSelect.value);
-            
-            if (useOpenAI.checked) {
-                // キャッシュをクリアして毎回新しい音声をテスト
-                const cacheKeys = Array.from(audioCache.keys());
-                for (const key of cacheKeys) {
-                    if (key.includes(testText)) {
-                        audioCache.delete(key);
-                    }
-                }
-                
-                // 改善した音声生成関数を呼び出し
-                generateSpeech(testText, voice, 'tts-1-hd', speed);
-            } else {
-                const utterance = new SpeechSynthesisUtterance(testText);
-                utterance.lang = 'ja-JP';
-                utterance.rate = speed;
-                synth.speak(utterance);
-            }
-        });
-                
-        // 要素を取得
-        const card1 = document.getElementById('card1');
-        const card2 = document.getElementById('card2');
-        const nextButton = document.getElementById('next-button');
-        const hiraganaButtonsContainer = document.getElementById('hiragana-buttons');
-        const prevSetButton = document.getElementById('prev-set');
-        const nextSetButton = document.getElementById('next-set');
-        const rewardContainer = document.getElementById('reward-container');
-        const rewardImage = document.getElementById('reward-image');
-        const rewardCaption = document.getElementById('reward-caption');
-        const questionText = document.getElementById('question-text'); // 問題文表示用の要素
         
-        // 各カードのひらがなと正解マークの要素を取得
-        const hiragana1 = card1.querySelector('.hiragana');
-        const hiragana2 = card2.querySelector('.hiragana');
-        const correctMark1 = card1.querySelector('.correct-mark');
-        const correctMark2 = card2.querySelector('.correct-mark');
+        // テスト用のボタンのイベントリスナーも更新
+        if (testVoiceButton) {
+            testVoiceButton.addEventListener('click', function() {
+                const testText = 'ひらがなクイズへようこそ！楽しく学びましょう！';
+                const voice = voiceSelect.value;
+                const speed = parseFloat(speedSelect.value);
+                
+                if (useOpenAI.checked) {
+                    // キャッシュをクリアして毎回新しい音声をテスト
+                    const cacheKeys = Array.from(audioCache.keys());
+                    for (const key of cacheKeys) {
+                        if (key.includes(testText)) {
+                            audioCache.delete(key);
+                        }
+                    }
+                    
+                    // 改善した音声生成関数を呼び出し
+                    generateSpeech(testText, voice, speed);
+                } else {
+                    const utterance = new SpeechSynthesisUtterance(testText);
+                    utterance.lang = 'ja-JP';
+                    utterance.rate = speed;
+                    synth.speak(utterance);
+                }
+            });
+        }
         
         // GitHubの画像URL
         const baseImageUrl = 'https://kaorisakoda.github.io/hiragana-app-images/images/';
@@ -644,7 +595,7 @@
             // テキストとして表示
             questionText.textContent = questionMessage;
             
-            // OpenAI TTS APIを使用して読み上げ（プロンプトなしで直接テキストを送信）
+            // OpenAI TTS APIを使用して読み上げ
             generateSpeech(questionMessage);
         }
         
@@ -660,7 +611,7 @@
             // 音声メッセージを作成
             let feedbackMessage = `すごいっ！正解っ！${item.name}の${hiragana}だね。`;
                         
-            // OpenAI TTS APIを使用（プロンプトなしで直接テキストを送信）
+            // OpenAI TTS APIを使用
             generateSpeech(feedbackMessage);
             
             // 画像を表示
@@ -689,7 +640,7 @@
             // 不正解メッセージ
             const wrongMessage = `もう一度チャレンジしてみようっ！「${correctHiragana}」はどっちかな？`;
             
-            // OpenAI TTS APIを使用（プロンプトなしで直接テキストを送信）
+            // OpenAI TTS APIを使用
             generateSpeech(wrongMessage);
             
             // 従来の音も並行して再生
@@ -837,76 +788,86 @@
         }
         
         // カードのクリックイベントを追加
-        card1.addEventListener('click', function() {
-            if (isAnswered) return; // 既に回答済みなら何もしない
-            
-            if (hiragana1.textContent === correctHiragana) {
-                correctMark1.classList.add('show-correct');
-                showCorrectFeedback(correctHiragana);
-                isAnswered = true;
-                nextButton.classList.add('show');
-            } else {
-                playWrongSound();
-            }
-        });
+        if (card1) {
+            card1.addEventListener('click', function() {
+                if (isAnswered) return; // 既に回答済みなら何もしない
+                
+                if (hiragana1.textContent === correctHiragana) {
+                    correctMark1.classList.add('show-correct');
+                    showCorrectFeedback(correctHiragana);
+                    isAnswered = true;
+                    nextButton.classList.add('show');
+                } else {
+                    playWrongSound();
+                }
+            });
+        }
         
-        card2.addEventListener('click', function() {
-            if (isAnswered) return; // 既に回答済みなら何もしない
-            
-            if (hiragana2.textContent === correctHiragana) {
-                correctMark2.classList.add('show-correct');
-                showCorrectFeedback(correctHiragana);
-                isAnswered = true;
-                nextButton.classList.add('show');
-            } else {
-                playWrongSound();
-            }
-        });
+        if (card2) {
+            card2.addEventListener('click', function() {
+                if (isAnswered) return; // 既に回答済みなら何もしない
+                
+                if (hiragana2.textContent === correctHiragana) {
+                    correctMark2.classList.add('show-correct');
+                    showCorrectFeedback(correctHiragana);
+                    isAnswered = true;
+                    nextButton.classList.add('show');
+                } else {
+                    playWrongSound();
+                }
+            });
+        }
         
         // 次の問題ボタンのイベント
-        nextButton.addEventListener('click', generateQuestion);
+        if (nextButton) {
+            nextButton.addEventListener('click', generateQuestion);
+        }
         
         // 次のひらがなセットを表示するイベント
-        nextSetButton.addEventListener('click', function() {
-            currentGroupIndex = (currentGroupIndex + 1) % hiraganaGroups.length;
-            activeHiragana = hiraganaGroups[currentGroupIndex].chars;
-            
-            // 新しいグループへの移行メッセージ
-            const groupName = hiraganaGroups[currentGroupIndex].name;
-            const moveMessage = `次は${groupName}のひらがなに挑戦してみよう！`;
-            
-            // プロンプトなしで直接テキストを送信
-            generateSpeech(moveMessage);
-            
-            createHiraganaButtons();
-            setTimeout(() => {
-                generateQuestion();
-            }, 2000); // 音声再生後に問題を生成
-        });
+        if (nextSetButton) {
+            nextSetButton.addEventListener('click', function() {
+                currentGroupIndex = (currentGroupIndex + 1) % hiraganaGroups.length;
+                activeHiragana = hiraganaGroups[currentGroupIndex].chars;
+                
+                // 新しいグループへの移行メッセージ
+                const groupName = hiraganaGroups[currentGroupIndex].name;
+                const moveMessage = `次は${groupName}のひらがなに挑戦してみよう！`;
+                
+                // テキストを送信
+                generateSpeech(moveMessage);
+                
+                createHiraganaButtons();
+                setTimeout(() => {
+                    generateQuestion();
+                }, 2000); // 音声再生後に問題を生成
+            });
+        }
         
         // 前のひらがなセットを表示するイベント
-        prevSetButton.addEventListener('click', function() {
-            currentGroupIndex = (currentGroupIndex - 1 + hiraganaGroups.length) % hiraganaGroups.length;
-            activeHiragana = hiraganaGroups[currentGroupIndex].chars;
-            
-            // 新しいグループへの移行メッセージ
-            const groupName = hiraganaGroups[currentGroupIndex].name;
-            const moveMessage = `${groupName}のひらがなに戻るよ！`;
-            
-            // プロンプトなしで直接テキストを送信
-            generateSpeech(moveMessage);
-            
-            createHiraganaButtons();
-            setTimeout(() => {
-                generateQuestion();
-            }, 2000); // 音声再生後に問題を生成
-        });
+        if (prevSetButton) {
+            prevSetButton.addEventListener('click', function() {
+                currentGroupIndex = (currentGroupIndex - 1 + hiraganaGroups.length) % hiraganaGroups.length;
+                activeHiragana = hiraganaGroups[currentGroupIndex].chars;
+                
+                // 新しいグループへの移行メッセージ
+                const groupName = hiraganaGroups[currentGroupIndex].name;
+                const moveMessage = `${groupName}のひらがなに戻るよ！`;
+                
+                // テキストを送信
+                generateSpeech(moveMessage);
+                
+                createHiraganaButtons();
+                setTimeout(() => {
+                    generateQuestion();
+                }, 2000); // 音声再生後に問題を生成
+            });
+        }
         
         // ゲーム開始時のウェルカムメッセージ
         function playWelcomeMessage() {
             const welcomeMessage = `ひらがなクイズをはじめるよ！どのひらがなが読めるかな？いっしょにあそぼう！`;
             
-            // プロンプトなしで直接テキストを送信
+            // テキストを送信
             generateSpeech(welcomeMessage);
         }
         
