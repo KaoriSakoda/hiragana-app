@@ -1,0 +1,9 @@
+{
+  "name": "hiragana-app",
+  "version": "1.0.0",
+  "description": "ひらがな学習アプリ",
+  "main": "index.html",
+  "dependencies": {
+    "node-fetch": "^2.6.7"
+  }
+}
