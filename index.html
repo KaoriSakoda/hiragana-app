@@ -885,3 +885,79 @@
                 generateQuestion();
             }, 3000); // ウェルカムメッセージ再生後に問題を生成
         }, 1000);
+    </script>
+    
+    <!-- デバッグ用コード：APIとDOMの動作確認 -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM読み込み完了');
+
+            // APIのテスト関数
+            async function testAPI() {
+                console.log('API接続テスト開始');
+                try {
+                    const response = await fetch('/api/generate-speech', {
+                        method: 'POST',
+                        headers: {
+                        'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                        text: 'テスト',
+                        voice: 'nova',
+                        speed: 1.0
+                        })
+                    });
+                    
+                    console.log('APIレスポンスステータス:', response.status);
+                    
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        console.error('APIエラー:', errorData);
+                        alert('API接続テスト失敗: ' + JSON.stringify(errorData));
+                        return;
+                    }
+                    
+                    const data = await response.json();
+                    console.log('APIレスポンス受信成功', data);
+                    alert('API接続テスト成功!');
+                    
+                    // デコードして再生テスト
+                    if (data.audio) {
+                        const audioData = atob(data.audio);
+                        const arrayBuffer = new ArrayBuffer(audioData.length);
+                        const uint8Array = new Uint8Array(arrayBuffer);
+                        
+                        for (let i = 0; i < audioData.length; i++) {
+                            uint8Array[i] = audioData.charCodeAt(i);
+                        }
+                        
+                        const audioBlob = new Blob([uint8Array], { type: 'audio/mp3' });
+                        const audioUrl = URL.createObjectURL(audioBlob);
+                        const audio = new Audio(audioUrl);
+                        audio.play();
+                    }
+                } catch (error) {
+                    console.error('API呼び出しエラー:', error);
+                    alert('API接続エラー: ' + error.message);
+                }
+            }
+            
+            // テストボタンを作成
+            const testButton = document.createElement('button');
+            testButton.textContent = 'API接続テスト';
+            testButton.style.position = 'fixed';
+            testButton.style.bottom = '10px';
+            testButton.style.right = '10px';
+            testButton.style.zIndex = '1000';
+            testButton.style.padding = '10px';
+            testButton.style.background = '#ff6b6b';
+            testButton.style.color = 'white';
+            testButton.style.border = 'none';
+            testButton.style.borderRadius = '5px';
+            testButton.onclick = testAPI;
+            
+            document.body.appendChild(testButton);
+        });
+    </script>
+</body>
+</html>
