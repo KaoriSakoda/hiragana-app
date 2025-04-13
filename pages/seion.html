@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-WFTF98DS10"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+    
+      gtag('config', 'G-WFTF98DS10');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ひらがな学習アプリ</title>
+    <style>
+        body {
+            font-family: 'Arial Rounded MT Bold', 'Arial', sans-serif;
+            text-align: center;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        .game-container {
+            background-color: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            width: 90%;
+            max-width: 500px;
+        }
+        .title {
+            color: #FF6B6B;
+            font-size: 28px;
+            margin-bottom: 20px;
+        }
+        /* 問題文の表示用スタイル */
+        .question-text {
+            font-size: 22px;
+            color: #333;
+            margin: 15px 0;
+            background-color: #f8f8f8;
+            padding: 10px;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+        .cards-container {
+            display: flex;
+            justify-content: space-around;
+            margin: 30px 0;
+        }
+        .card {
+            position: relative;
+            font-size: 80px;
+            background-color: #FFE66D;
+            border-radius: 15px;
+            width: 140px;
+            height: 140px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+            box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+            margin: 0 10px;
+        }
+        .card:hover {
+            transform: scale(1.05);
+        }
+        .card:active {
+            transform: scale(0.95);
+        }
+        .correct-mark {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 120px;
+            color: #4CAF50;
+            background-color: rgba(255, 255, 255, 0.7);
+            border-radius: 15px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        .show-correct {
+            opacity: 1;
+        }
+        .next-button {
+            background-color: #4ECDC4;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 12px 25px;
+            font-size: 18px;
+            cursor: pointer;
+            margin: 20px auto 0;
+            transition: background-color 0.2s;
+            display: none;
+        }
+        .next-button.show {
+            display: block;
+        }
+        .next-button:hover {
+            background-color: #3DBDB4;
+        }
+        .hiragana-group {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .hiragana-btn {
+            font-size: 24px;
+            background-color: #FFD166;
+            border: none;
+            border-radius: 8px;
+            margin: 5px;
+            padding: 10px 15px;
+            cursor: pointer;
+        }
+        .hiragana-btn:hover {
+            background-color: #FFC133;
+        }
+        .hiragana-btn.active {
+            background-color: #FF9F1C;
+            font-weight: bold;
+        }
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-top: 20px;
+        }
+        .reward-container {
+            display: none;
+            margin-top: 20px;
+            text-align: center;
+        }
+        .reward-container.show {
+            display: block;
+        }
+        .reward-image {
+            max-width: 100%;
+            height: auto;
+            max-height: 200px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .reward-caption {
+            margin-top: 10px;
+            font-size: 18px;
+            color: #333;
+        }
+        .settings-panel {
+            margin-top: 20px;
+            background-color: #f0f0f0;
+            padding: 15px;
+            border-radius: 10px;
+            max-width: 500px;
+            width: 90%;
+        }
+        .settings-toggle {
+            background-color: #FF6B6B;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 8px 15px;
+            font-size: 14px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        .settings-content {
+            display: none;
+            margin-top: 10px;
+        }
+        .settings-content.show {
+            display: block;
+        }
+        /* ローディングインジケーター */
+        .loading-indicator {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #FF6B6B;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        /* 音声プレイヤー */
+        .audio-player {
+            margin-top: 10px;
+            width: 100%;
+            max-width: 300px;
+        }
+        /* 連続正解カウンター */
+        .streak-counter {
+            font-size: 18px;
+            color: #FF6B6B;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        /* 設定ノート */
+        .settings-note {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <!-- ローディングインジケーター -->
+    <div id="loading-indicator" class="loading-indicator">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <div class="game-container">
+        <h1 class="title">ひらがなクイズ</h1>
+        
+        <!-- 問題文を表示する要素 -->
+        <div id="question-text" class="question-text"></div>
+        
+        <div class="cards-container">
+            <div class="card" id="card1">
+                <span class="hiragana">あ</span>
+                <div class="correct-mark">⭕</div>
+            </div>
+            <div class="card" id="card2">
+                <span class="hiragana">い</span>
+                <div class="correct-mark">⭕</div>
+            </div>
+        </div>
+        
+        <!-- 連続正解カウンター -->
+        <div id="streak-counter" class="streak-counter"></div>
+        
+        <div id="reward-container" class="reward-container">
+            <img id="reward-image" class="reward-image" src="" alt="">
+            <div id="reward-caption" class="reward-caption"></div>
+        </div>
+        
+        <button id="next-button" class="next-button">次の問題へ</button>
+        
+        <div class="hiragana-group">
+            <h3>練習するひらがなを選んでください</h3>
+            <div id="hiragana-buttons">
+                <!-- ここにひらがなのボタンが動的に追加されます -->
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button id="prev-set" class="next-button show">前のグループ</button>
+            <button id="next-set" class="next-button show">次のグループ</button>
+        </div>
+    </div>
+    
+    <!-- 設定パネル -->
+    <button id="settings-toggle" class="settings-toggle">設定</button>
+    <div id="settings-panel" class="settings-panel">
+        <div id="settings-content" class="settings-content">
+            <h3>音声設定</h3>
+            <div>
+                <label for="voice-select">音声: </label>
+                <select id="voice-select">
+                    <option value="nova" selected>Nova (女性)</option>
+                    <option value="alloy">Alloy (中性的)</option>
+                    <option value="shimmer">Shimmer (柔らかい女性)</option>
+                    <option value="echo">Echo (男性)</option>
+                    <option value="fable">Fable (柔らかい中性)</option>
+                    <option value="onyx">Onyx (低い男性)</option>
+                </select>
+            </div>
+            <div>
+                <label for="speed-select">速度: </label>
+                <select id="speed-select">
+                    <option value="0.7">ゆっくり</option>
+                    <option value="0.8" selected>普通</option>
+                    <option value="0.9">やや速め</option>
+                </select>
+            </div>
+            <div>
+                <label for="use-openai">
+                    <input type="checkbox" id="use-openai" checked> OpenAI音声を使用する
+                </label>
+                <p class="settings-note">※ブラウザの音声合成を使用する場合はチェックを外してください</p>
+            </div>
+            <div>
+                <button id="test-voice">音声テスト</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM要素のnull安全なセレクタ関数
+        function safeGetElement(id) {
+          const element = document.getElementById(id);
+          if (!element) {
+            console.warn(`要素 ${id} が見つかりませんでした`);
+          }
+          return element;
+        }
+        
+        // 設定パネルの要素
+        const settingsToggle = safeGetElement('settings-toggle');
+        const settingsContent = safeGetElement('settings-content');
+        const voiceSelect = safeGetElement('voice-select');
+        const speedSelect = safeGetElement('speed-select');
+        const useOpenAI = safeGetElement('use-openai');
+        const testVoiceButton = safeGetElement('test-voice');
+        const loadingIndicator = safeGetElement('loading-indicator');
+        const streakCounter = safeGetElement('streak-counter');
+        
+        // 要素を取得
+        const card1 = safeGetElement('card1');
+        const card2 = safeGetElement('card2');
+        const nextButton = safeGetElement('next-button');
+        const hiraganaButtonsContainer = safeGetElement('hiragana-buttons');
+        const prevSetButton = safeGetElement('prev-set');
+        const nextSetButton = safeGetElement('next-set');
+        const rewardContainer = safeGetElement('reward-container');
+        const rewardImage = safeGetElement('reward-image');
+        const rewardCaption = safeGetElement('reward-caption');
+        const questionText = safeGetElement('question-text');
+        
+        // 各カードのひらがなと正解マークの要素を取得
+        const hiragana1 = card1.querySelector('.hiragana');
+        const hiragana2 = card2.querySelector('.hiragana');
+        const correctMark1 = card1.querySelector('.correct-mark');
+        const correctMark2 = card2.querySelector('.correct-mark');
+        
+        // 設定パネルのトグル
+        if (settingsToggle) {
+          settingsToggle.addEventListener('click', function() {
+            settingsContent.classList.toggle('show');
+          });
+        }
+        
+        // 音声合成の設定
+        const synth = window.speechSynthesis;
+        
+        // 連続正解カウント
+        let streakCount = 0;
+        
+        // AudioCache - 音声キャッシュ
+        const audioCache = new Map();
+
+        // 日本語ネイティブ発音を重視した音声生成関数
+        async function generateSpeech(text, voice = voiceSelect.value, speed = parseFloat(speedSelect.value)) {
+            // ブラウザ音声合成を使用する場合
+            if (!useOpenAI.checked) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'ja-JP';
+                utterance.rate = speed;
+                synth.speak(utterance);
+                return;
+            }
+            
+            // 2. テキスト前処理 - より自然な日本語発音のための微調整
+            let processedText = text;
+            
+            // ひらがな一文字だけの発音を特に改善（「あ」「い」など）
+            if (/^[ぁ-ん]$/.test(text.trim())) {
+                // 単一のひらがなの場合、より明確に発音されるようにする
+                processedText = `「${text.trim()}」`;
+            }
+            
+            // 問題文のパターンを検出して強調
+            const questionMatch = text.match(/「([ぁ-ん])」は どっちかな？/);
+            if (questionMatch) {
+                const hiragana = questionMatch[1];
+                processedText = `「${hiragana}」は どっちかな？`;
+            }
+            
+            // 3. 子供向け日本語発音に特化した指示文
+            const instructions = `
+        あなたは日本の幼稚園で10年以上働いている先生で、ネイティブの日本語話者です。3歳の子どもに向けてひらがなを教えています。
+
+        絶対に守るべきこと:
+        1. 完全に自然な日本語のネイティブ発音で話してください。外国語訛りは絶対に避けてください。
+        2. 日本の子ども番組の声優のような、温かみのある明るい声で話してください。
+        3. 「あ」「い」などのひらがなを読む時は、特に明確に、子どもが聞き取りやすいように発音してください。
+        4. 質問の時は語尾を上げて、子どもが答えたくなるようなトーンにしてください。
+        5. 「すごい！」「やったね！」などの褒め言葉は、感情豊かに、子どもが喜ぶように読んでください。`;
+            
+            // 4. 速度の最適化 - 子ども向けにさらに調整
+            const optimizedSpeed = 1.0;
+            
+            // キャッシュキーを生成
+            const cacheKey = `${processedText}_${voice}_${optimizedSpeed}_v2`;
+            
+            // キャッシュ確認
+            if (audioCache.has(cacheKey)) {
+                const cachedAudio = audioCache.get(cacheKey);
+                cachedAudio.play();
+                return cachedAudio;
+            }
+            
+            // ローディング表示
+            loadingIndicator.style.display = 'flex';
+            
+            try {
+                console.log('OpenAI TTS APIリクエスト:', {
+                    text: processedText,
+                    voice: voice,
+                    speed: optimizedSpeed
+                });
+                
+                // Netlify Functionを使って音声を生成
+                const response = await fetch('/api/generate-speech', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        text: processedText,
+                        voice: voice,
+                        speed: optimizedSpeed,
+                        instructions: instructions
+                    })
+                });
+        
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error('API Error:', response.status, errorData);
+                    throw new Error(`APIリクエストが失敗: ${response.status}`);
+                }
+        
+                const responseData = await response.json();
+                
+                // Base64エンコードされた音声データをデコード
+                const audioData = atob(responseData.audio);
+                const arrayBuffer = new ArrayBuffer(audioData.length);
+                const uint8Array = new Uint8Array(arrayBuffer);
+                
+                for (let i = 0; i < audioData.length; i++) {
+                    uint8Array[i] = audioData.charCodeAt(i);
+                }
+                
+                const audioBlob = new Blob([uint8Array], { type: 'audio/mp3' });
+                const audioUrl = URL.createObjectURL(audioBlob);
+                
+                // オーディオ要素を作成して再生
+                const audio = new Audio(audioUrl);
+                
+                // キャッシュに保存
+                audioCache.set(cacheKey, audio);
+                
+                audio.play();
+                
+                // ローディングインジケーターを非表示
+                loadingIndicator.style.display = 'none';
+                
+                return audio;
+            } catch (error) {
+                console.error('Error generating speech:', error);
+                
+                // ローディングインジケーターを非表示
+                loadingIndicator.style.display = 'none';
+                
+                // フォールバック
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'ja-JP';
+                utterance.rate = speed;
+                synth.speak(utterance);
+                
+                alert('音声の生成に失敗しました。詳細はコンソールをご確認ください。');
+            }
+        }
+        
+        // テスト用のボタンのイベントリスナーを更新
+        if (testVoiceButton) {
+            testVoiceButton.addEventListener('click', function() {
+                const testText = 'ひらがなクイズへようこそ！楽しく学びましょう！';
+                const voice = voiceSelect.value;
+                const speed = parseFloat(speedSelect.value);
+                
+                if (useOpenAI.checked) {
+                    // キャッシュをクリアして毎回新しい音声をテスト
+                    const cacheKeys = Array.from(audioCache.keys());
+                    for (const key of cacheKeys) {
+                        if (key.includes(testText)) {
+                            audioCache.delete(key);
+                        }
+                    }
+                    
+                    // 改善した音声生成関数を呼び出し
+                    generateSpeech(testText, voice, speed);
+                } else {
+                    const utterance = new SpeechSynthesisUtterance(testText);
+                    utterance.lang = 'ja-JP';
+                    utterance.rate = speed;
+                    synth.speak(utterance);
+                }
+            });
+        }
+        
+        // GitHubの画像URL
+        const baseImageUrl = 'https://kaorisakoda.github.io/hiragana-app-images/images/';
+        
+        // ひらがなと対応する画像・名前の定義
+        const hiraganaItems = {
+            'あ': { name: 'あしか', imageFile: 'a.png' },
+            'い': { name: 'いるか', imageFile: 'i.png' },
+            'う': { name: 'うちゅうひこうし', imageFile: 'u.png' },
+            'え': { name: 'えび', imageFile: 'e.png' },
+            'お': { name: 'おに', imageFile: 'o.png' },
+            'か': { name: 'かめ', imageFile: 'ka.png' },
+            'き': { name: 'きょうりゅう', imageFile: 'ki.png' },
+            'く': { name: 'くるま', imageFile: 'ku.png' },
+            'け': { name: 'けいさつかん', imageFile: 'ke.png' },
+            'こ': { name: 'こまち', imageFile: 'ko.png' },
+            'さ': { name: 'さくら', imageFile: 'sa.png' },
+            'し': { name: 'しょうぼうしゃ', imageFile: 'shi.png' },
+            'す': { name: 'すいか', imageFile: 'su.png' },
+            'せ': { name: 'せんろ', imageFile: 'se.png' },
+            'そ': { name: 'そら', imageFile: 'so.png' },
+            'た': { name: 'たこ', imageFile: 'ta.png' },
+            'ち': { name: 'ちきゅう', imageFile: 'chi.png' },
+            'つ': { name: 'つき', imageFile: 'tsu.png' },
+            'て': { name: 'てんとうむし', imageFile: 'te.png' },
+            'と': { name: 'ともだち', imageFile: 'to.png' },
+            'な': { name: 'なみ', imageFile: 'na.png' },
+            'に': { name: 'にじ', imageFile: 'ni.png' },
+            'ぬ': { name: 'ぬりえ', imageFile: 'nu.png' },
+            'ね': { name: 'ねこ', imageFile: 'ne.png' },
+            'の': { name: 'のぞみ', imageFile: 'no.png' },
+            'は': { name: 'はやぶさ', imageFile: 'ha.png' },
+            'ひ': { name: 'ひこうき', imageFile: 'hi.png' },
+            'ふ': { name: 'ふね', imageFile: 'fu.png' },
+            'へ': { name: 'へりこぷたー', imageFile: 'he.png' },
+            'ほ': { name: 'ほし', imageFile: 'ho.png' },
+            'ま': { name: 'まんた', imageFile: 'ma.png' },
+            'み': { name: 'みかん', imageFile: 'mi.png' },
+            'む': { name: 'むぎわらぼうし', imageFile: 'mu.png' },
+            'め': { name: 'めがね', imageFile: 'me.png' },
+            'も': { name: 'もも', imageFile: 'mo.png' },
+            'や': { name: 'やまのてせん', imageFile: 'ya.png' },
+            'ゆ': { name: 'ゆうびんしゃ', imageFile: 'yu.png' },
+            'よ': { name: 'よっと', imageFile: 'yo.png' },
+            'ら': { name: 'らいおん', imageFile: 'ra.png' },
+            'り': { name: 'りんご', imageFile: 'ri.png' },
+            'る': { name: 'るーれっと', imageFile: 'ru.png' },
+            'れ': { name: 'れもん', imageFile: 're.png' },
+            'ろ': { name: 'ろけっと', imageFile: 'ro.png' },
+            'わ': { name: 'わに', imageFile: 'wa.png' },
+            'を': { name: 'ごはんをたべる', imageFile: 'wo.png' },
+            'ん': { name: 'だんご', imageFile: 'n.png' }
+        };
+        
+        // 50音の配列と行の名前
+        const hiraganaGroups = [
+            // あ行
+            { name: 'あ行', chars: ['あ', 'い', 'う', 'え', 'お'] },
+            // か行
+            { name: 'か行', chars: ['か', 'き', 'く', 'け', 'こ'] },
+            // さ行
+            { name: 'さ行', chars: ['さ', 'し', 'す', 'せ', 'そ'] },
+            // た行
+            { name: 'た行', chars: ['た', 'ち', 'つ', 'て', 'と'] },
+            // な行
+            { name: 'な行', chars: ['な', 'に', 'ぬ', 'ね', 'の'] },
+            // は行
+            { name: 'は行', chars: ['は', 'ひ', 'ふ', 'へ', 'ほ'] },
+            // ま行
+            { name: 'ま行', chars: ['ま', 'み', 'む', 'め', 'も'] },
+            // や行
+            { name: 'や行', chars: ['や', 'ゆ', 'よ'] },
+            // ら行
+            { name: 'ら行', chars: ['ら', 'り', 'る', 'れ', 'ろ'] },
+            // わ行
+            { name: 'わ行', chars: ['わ', 'を', 'ん'] }
+        ];
+        
+        // 現在選択されているひらがなのセット
+        let activeHiragana = hiraganaGroups[0].chars;
+        let currentGroupIndex = 0;
+        
+        // 正解の文字とインデックス
+        let correctHiragana = 'あ';
+        let isAnswered = false;
+        
+        // 問題を読み上げる関数
+        function speakQuestion() {
+            const questionMessage = `「${correctHiragana}」は どっちかな？`;
+            
+            // テキストとして表示
+            questionText.textContent = questionMessage;
+            
+            // OpenAI TTS APIを使用して読み上げ
+            generateSpeech(questionMessage);
+        }
+        
+        // 正解の音声を再生して画像を表示
+        function showCorrectFeedback(hiragana) {
+            // 連続正解カウントを増やす
+            streakCount++;
+            updateStreakCounter();
+            
+            // 対応するアイテム情報を取得
+            const item = hiraganaItems[hiragana];
+            
+            // 音声メッセージを作成
+            let feedbackMessage = `すごいっ！正解っ！${item.name}の${hiragana}だね。`;
+                        
+            // OpenAI TTS APIを使用
+            generateSpeech(feedbackMessage);
+            
+            // 画像を表示
+            rewardImage.src = baseImageUrl + item.imageFile;
+            rewardImage.alt = item.name;
+            rewardCaption.textContent = `${item.name}の「${hiragana}」だね！`;
+            rewardContainer.classList.add('show');
+        }
+        
+        // 連続正解カウンターを更新
+        function updateStreakCounter() {
+            if (streakCount > 0) {
+                streakCounter.textContent = `${streakCount}問連続正解！`;
+                streakCounter.style.display = 'block';
+            } else {
+                streakCounter.style.display = 'none';
+            }
+        }
+        
+        // 不正解の音を再生
+        function playWrongSound() {
+            // 連続正解カウントをリセット
+            streakCount = 0;
+            updateStreakCounter();
+            
+            // 不正解メッセージ
+            const wrongMessage = `もう一度チャレンジしてみようっ！「${correctHiragana}」はどっちかな？`;
+            
+            // OpenAI TTS APIを使用
+            generateSpeech(wrongMessage);
+            
+            // 従来の音も並行して再生
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.type = 'sine';
+            oscillator.frequency.value = 150;
+            gainNode.gain.value = 0.2; // 音量を下げる
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.start();
+            
+            // 0.2秒後に周波数を下げて「ぶぶー」のような効果を出す
+            oscillator.frequency.setValueAtTime(150, audioContext.currentTime);
+            oscillator.frequency.linearRampToValueAtTime(100, audioContext.currentTime + 0.2);
+            oscillator.frequency.setValueAtTime(100, audioContext.currentTime + 0.3);
+            oscillator.frequency.linearRampToValueAtTime(70, audioContext.currentTime + 0.5);
+            
+            // 0.6秒後に音を止める
+            gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.6);
+            setTimeout(() => {
+                oscillator.stop();
+            }, 600);
+        }
+        
+        // ランダムに問題を生成する
+        function generateQuestion() {
+            // 回答済みフラグをリセット
+            isAnswered = false;
+            
+            // 次の問題ボタンを非表示
+            nextButton.classList.remove('show');
+            
+            // 正解マークをリセット
+            correctMark1.classList.remove('show-correct');
+            correctMark2.classList.remove('show-correct');
+            
+            // 報酬画像を非表示
+            rewardContainer.classList.remove('show');
+            
+            // アクティブなひらがなセットからランダムに2つ選ぶ
+            const available = [...activeHiragana];
+            
+            // ランダムに正解のひらがなを選ぶ
+            const correctIndex = Math.floor(Math.random() * available.length);
+            correctHiragana = available[correctIndex];
+            
+            // 正解を除いた配列から不正解のひらがなを選ぶ
+            const filteredAvailable = available.filter(h => h !== correctHiragana);
+            
+            // 不正解のひらがなを選ぶ（利用可能なひらがなが1つしかない場合は他のグループから選ぶ）
+            let wrongHiragana;
+            if (filteredAvailable.length > 0) {
+                const wrongIndex = Math.floor(Math.random() * filteredAvailable.length);
+                wrongHiragana = filteredAvailable[wrongIndex];
+            } else {
+                // 他のグループからランダムにひらがなを選ぶ
+                const otherHiragana = Object.keys(hiraganaItems).filter(h => h !== correctHiragana);
+                const randomIndex = Math.floor(Math.random() * otherHiragana.length);
+                wrongHiragana = otherHiragana[randomIndex];
+            }
+            
+            // 選択肢の位置をランダムに入れ替える
+            const position = Math.random() > 0.5 ? 0 : 1;
+            
+            if (position === 0) {
+                hiragana1.textContent = correctHiragana;
+                hiragana2.textContent = wrongHiragana;
+            } else {
+                hiragana1.textContent = wrongHiragana;
+                hiragana2.textContent = correctHiragana;
+            }
+            
+            // 問題を読み上げる
+            setTimeout(speakQuestion, 500);
+        }
+        
+        // 特定のひらがなを正解とする問題を生成
+        function generateQuestionWithSpecificHiragana(targetHiragana) {
+            // 回答済みフラグをリセット
+            isAnswered = false;
+            
+            // 次の問題ボタンを非表示
+            nextButton.classList.remove('show');
+            
+            // 正解マークをリセット
+            correctMark1.classList.remove('show-correct');
+            correctMark2.classList.remove('show-correct');
+            
+            // 報酬画像を非表示
+            rewardContainer.classList.remove('show');
+            
+            // アクティブなひらがなセットから、指定されたひらがな以外をランダムに1つ選ぶ
+            const available = activeHiragana.filter(h => h !== targetHiragana);
+            
+            // 不正解のひらがなを選ぶ（利用可能なひらがなが1つしかない場合は他のグループから選ぶ）
+            let wrongHiragana;
+            if (available.length > 0) {
+                const wrongIndex = Math.floor(Math.random() * available.length);
+                wrongHiragana = available[wrongIndex];
+            } else {
+                // 他のグループからランダムにひらがなを選ぶ
+                const otherHiragana = Object.keys(hiraganaItems).filter(h => h !== targetHiragana);
+                const randomIndex = Math.floor(Math.random() * otherHiragana.length);
+                wrongHiragana = otherHiragana[randomIndex];
+            }
+            
+            // 選択肢の位置をランダムに入れ替える
+            const position = Math.random() > 0.5 ? 0 : 1;
+            
+            if (position === 0) {
+                hiragana1.textContent = targetHiragana;
+                hiragana2.textContent = wrongHiragana;
+            } else {
+                hiragana1.textContent = wrongHiragana;
+                hiragana2.textContent = targetHiragana;
+            }
+            
+            // 正解のひらがなを設定
+            correctHiragana = targetHiragana;
+            
+            // 問題を読み上げる
+            setTimeout(speakQuestion, 500);
+        }
+        
+        // ひらがなのグループボタンを生成する
+        function createHiraganaButtons() {
+            hiraganaButtonsContainer.innerHTML = '';
+            
+            // 現在のグループのひらがなボタンを作成
+            activeHiragana.forEach((hiragana) => {
+                const button = document.createElement('button');
+                button.className = 'hiragana-btn';
+                button.textContent = hiragana;
+                button.addEventListener('click', () => {
+                    generateQuestionWithSpecificHiragana(hiragana);
+                });
+                hiraganaButtonsContainer.appendChild(button);
+            });
+        }
+        
+        // カードのクリックイベントを追加
+        if (card1) {
+            card1.addEventListener('click', function() {
+                if (isAnswered) return; // 既に回答済みなら何もしない
+                
+                if (hiragana1.textContent === correctHiragana) {
+                    correctMark1.classList.add('show-correct');
+                    showCorrectFeedback(correctHiragana);
+                    isAnswered = true;
+                    nextButton.classList.add('show');
+                } else {
+                    playWrongSound();
+                }
+            });
+        }
+        
+        if (card2) {
+            card2.addEventListener('click', function() {
+                if (isAnswered) return; // 既に回答済みなら何もしない
+                
+                if (hiragana2.textContent === correctHiragana) {
+                    correctMark2.classList.add('show-correct');
+                    showCorrectFeedback(correctHiragana);
+                    isAnswered = true;
+                    nextButton.classList.add('show');
+                } else {
+                    playWrongSound();
+                }
+            });
+        }
+        
+        // 次の問題ボタンのイベント
+        if (nextButton) {
+            nextButton.addEventListener('click', generateQuestion);
+        }
+        
+        // 次のひらがなセットを表示するイベント
+        if (nextSetButton) {
+            nextSetButton.addEventListener('click', function() {
+                currentGroupIndex = (currentGroupIndex + 1) % hiraganaGroups.length;
+                activeHiragana = hiraganaGroups[currentGroupIndex].chars;
+                
+                // 新しいグループへの移行メッセージ
+                const groupName = hiraganaGroups[currentGroupIndex].name;
+                const moveMessage = `次は${groupName}のひらがなに挑戦してみよう！`;
+                
+                // テキストを送信
+                generateSpeech(moveMessage);
+                
+                createHiraganaButtons();
+                setTimeout(() => {
+                    generateQuestion();
+                }, 2000); // 音声再生後に問題を生成
+            });
+        }
+        
+        // 前のひらがなセットを表示するイベント
+        if (prevSetButton) {
+            prevSetButton.addEventListener('click', function() {
+                currentGroupIndex = (currentGroupIndex - 1 + hiraganaGroups.length) % hiraganaGroups.length;
+                activeHiragana = hiraganaGroups[currentGroupIndex].chars;
+                
+                // 新しいグループへの移行メッセージ
+                const groupName = hiraganaGroups[currentGroupIndex].name;
+                const moveMessage = `${groupName}のひらがなに戻るよ！`;
+                
+                // テキストを送信
+                generateSpeech(moveMessage);
+                
+                createHiraganaButtons();
+                setTimeout(() => {
+                    generateQuestion();
+                }, 2000); // 音声再生後に問題を生成
+            });
+        }
+        
+        // ゲーム開始時のウェルカムメッセージ
+        function playWelcomeMessage() {
+            const welcomeMessage = `ひらがなクイズをはじめるよ！どのひらがなが読めるかな？いっしょにあそぼう！`;
+            
+            // テキストを送信
+            generateSpeech(welcomeMessage);
+        }
+        
+        // 初期化
+        createHiraganaButtons();
+        setTimeout(() => {
+            playWelcomeMessage();
+            setTimeout(() => {
+                generateQuestion();
+            }, 3000); // ウェルカムメッセージ再生後に問題を生成
+        }, 1000);
+    </script>
+    
+</body>
+</html>
